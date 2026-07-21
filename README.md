@@ -1,4 +1,4 @@
-# easypng-action
+# easypng
 
 A GitHub Action wrapper around [easypng](https://www.npmjs.com/package/easypng), for compressing and
 converting PNG, JPEG, WebP, and AVIF images in CI. Uses mozjpeg, pngquant-style palette quantization,
@@ -10,7 +10,7 @@ See also: [EasyPNG](https://amanghuman.com/easypng.html), the browser version of
 
 ```yaml
 - name: Compress images
-  uses: amanghuman/easypng-action@v1
+  uses: amanghuman/easypng@v1
   with:
     path: assets/images
     recursive: "true"
@@ -23,7 +23,7 @@ See also: [EasyPNG](https://amanghuman.com/easypng.html), the browser version of
 
 ```yaml
 - name: Compress images
-  uses: amanghuman/easypng-action@v1
+  uses: amanghuman/easypng@v1
   with:
     path: assets/images
     recursive: "true"
@@ -37,7 +37,7 @@ See also: [EasyPNG](https://amanghuman.com/easypng.html), the browser version of
 
 ```yaml
 - name: Compress images
-  uses: amanghuman/easypng-action@v1
+  uses: amanghuman/easypng@v1
   with:
     path: |
       assets/logos/*.png

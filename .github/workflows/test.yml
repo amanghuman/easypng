@@ -25,7 +25,7 @@ jobs:
               .toFile("sample.png");
           '
 
-      - name: Run easypng-action
+      - name: Run the easypng action
         id: easypng
         uses: ./
         with:
