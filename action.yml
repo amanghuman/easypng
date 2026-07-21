@@ -45,6 +45,14 @@ inputs:
     description: Recurse into subdirectories when a directory is given.
     required: false
     default: "false"
+  overwrite:
+    description: Overwrite source files in-place (deletes source file if format changes).
+    required: false
+    default: "false"
+  no-cache:
+    description: Bypass build cache and force compression on all files.
+    required: false
+    default: "false"
   concurrency:
     description: Max files encoded in parallel. Leave empty for the default.
     required: false
@@ -107,6 +115,8 @@ runs:
         [ -n "${{ inputs.max-size }}" ] && ARGS+=(--max-size "${{ inputs.max-size }}")
         [ -n "${{ inputs.concurrency }}" ] && ARGS+=(--concurrency "${{ inputs.concurrency }}")
         [ "${{ inputs.recursive }}" = "true" ] && ARGS+=(--recursive)
+        [ "${{ inputs.overwrite }}" = "true" ] && ARGS+=(--overwrite)
+        [ "${{ inputs.no-cache }}" = "true" ] && ARGS+=(--no-cache)
 
         while IFS= read -r ex; do
           [ -n "$ex" ] && ARGS+=(--max-size-except "$ex")

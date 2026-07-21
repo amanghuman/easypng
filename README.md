@@ -60,6 +60,8 @@ See also: [EasyPNG](https://amanghuman.com/easypng.html), the browser version of
 | `max-size` | Fail if any compressed file is still over this size in KB. | (skip) |
 | `max-size-except` | Exceptions to `max-size`, one `pattern` or `pattern=kb` per line. | (skip) |
 | `recursive` | Recurse into subdirectories when a directory is given. | `false` |
+| `overwrite` | Overwrite source files in-place (deletes source file if format changes). | `false` |
+| `no-cache` | Bypass build cache and force compression on all files. | `false` |
 | `concurrency` | Max files encoded in parallel. | (auto) |
 | `version` | Which `easypng` npm version to run. | `latest` |
 
