@@ -1,8 +1,6 @@
-# easypng
+# EasyPNG
 
-[![test](https://github.com/amanghuman/easypng/actions/workflows/test.yml/badge.svg)](https://github.com/amanghuman/easypng/actions/workflows/test.yml)
-[![Marketplace](https://img.shields.io/badge/marketplace-easypng-black?logo=github)](https://github.com/marketplace/actions/easypng)
-[![License: MIT](https://img.shields.io/badge/license-MIT-black)](LICENSE)
+[![test](https://github.com/amanghuman/easypng/actions/workflows/test.yml/badge.svg)](https://github.com/amanghuman/easypng/actions/workflows/test.yml) [![Marketplace](https://img.shields.io/badge/marketplace-easypng-black?logo=github)](https://github.com/marketplace/actions/easypng) [![License: MIT](https://img.shields.io/badge/license-MIT-black)](LICENSE)
 
 A GitHub Action wrapper around [easypng](https://www.npmjs.com/package/easypng), for compressing and
 converting PNG, JPEG, WebP, and AVIF images in CI. Uses mozjpeg, pngquant-style palette quantization,
