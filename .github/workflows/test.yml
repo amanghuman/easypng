@@ -52,7 +52,7 @@ jobs:
           path: sample.png
           format: png
           colors: "0"
-          max-size: "1"
+          max-size: "0.01"
           out: dist-budget
 
       - name: Confirm the budget step actually failed
