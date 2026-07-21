@@ -3,7 +3,7 @@ description: Compress and convert PNG, JPEG, WebP, and AVIF images with mozjpeg,
 author: amanghuman
 branding:
   icon: image
-  color: purple
+  color: gray-dark
 
 inputs:
   path:
