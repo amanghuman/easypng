@@ -1,0 +1,150 @@
+name: easypng
+description: Compress and convert PNG, JPEG, WebP, and AVIF images with mozjpeg, pngquant-style palette quantization, libwebp, and libavif.
+author: amanghuman
+branding:
+  icon: image
+  color: purple
+
+inputs:
+  path:
+    description: Files, directories, or glob patterns to compress. One per line for multiple.
+    required: true
+  out:
+    description: Output directory.
+    required: false
+    default: easypng-output
+  format:
+    description: Output format, one of original, png, jpeg, webp, avif.
+    required: false
+    default: original
+  quality:
+    description: Quality 1-100 for jpeg/webp/avif and PNG palette quantization.
+    required: false
+    default: "75"
+  colors:
+    description: PNG palette size, 2-256, or 0 for lossless PNG.
+    required: false
+    default: "256"
+  resize:
+    description: Resize before compressing, e.g. 50%, 1920, or 800x600. Leave empty to skip.
+    required: false
+    default: ""
+  target-size:
+    description: Best-effort target size in KB, lowers quality until each file fits. Leave empty to skip.
+    required: false
+    default: ""
+  max-size:
+    description: Fail the action if any compressed file is still over this size in KB. Leave empty to skip.
+    required: false
+    default: ""
+  max-size-except:
+    description: Exceptions to max-size, one "pattern" or "pattern=kb" per line.
+    required: false
+    default: ""
+  recursive:
+    description: Recurse into subdirectories when a directory is given.
+    required: false
+    default: "false"
+  concurrency:
+    description: Max files encoded in parallel. Leave empty for the default.
+    required: false
+    default: ""
+  version:
+    description: Which easypng npm version to run, defaults to the latest release.
+    required: false
+    default: latest
+
+outputs:
+  succeeded:
+    description: Number of files compressed successfully.
+    value: ${{ steps.result.outputs.succeeded }}
+  failed:
+    description: Number of files that failed to compress.
+    value: ${{ steps.result.outputs.failed }}
+  total-original-size:
+    description: Total original size in bytes.
+    value: ${{ steps.result.outputs.total-original-size }}
+  total-compressed-size:
+    description: Total compressed size in bytes.
+    value: ${{ steps.result.outputs.total-compressed-size }}
+  total-saved-percent:
+    description: Overall percent saved.
+    value: ${{ steps.result.outputs.total-saved-percent }}
+  over-budget-count:
+    description: Number of files still over the max-size budget.
+    value: ${{ steps.result.outputs.over-budget-count }}
+  result-json:
+    description: The full JSON result from easypng --json.
+    value: ${{ steps.result.outputs.result-json }}
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Node
+      uses: actions/setup-node@v4
+      with:
+        node-version: "20"
+
+    - name: Run easypng
+      id: run
+      shell: bash
+      env:
+        INPUT_PATH: ${{ inputs.path }}
+        INPUT_MAX_SIZE_EXCEPT: ${{ inputs.max-size-except }}
+      run: |
+        ARGS=()
+        while IFS= read -r p; do
+          [ -n "$p" ] && ARGS+=("$p")
+        done <<< "$INPUT_PATH"
+
+        ARGS+=(--out "${{ inputs.out }}")
+        ARGS+=(--format "${{ inputs.format }}")
+        ARGS+=(--quality "${{ inputs.quality }}")
+        ARGS+=(--colors "${{ inputs.colors }}")
+
+        [ -n "${{ inputs.resize }}" ] && ARGS+=(--resize "${{ inputs.resize }}")
+        [ -n "${{ inputs.target-size }}" ] && ARGS+=(--target-size "${{ inputs.target-size }}")
+        [ -n "${{ inputs.max-size }}" ] && ARGS+=(--max-size "${{ inputs.max-size }}")
+        [ -n "${{ inputs.concurrency }}" ] && ARGS+=(--concurrency "${{ inputs.concurrency }}")
+        [ "${{ inputs.recursive }}" = "true" ] && ARGS+=(--recursive)
+
+        while IFS= read -r ex; do
+          [ -n "$ex" ] && ARGS+=(--max-size-except "$ex")
+        done <<< "$INPUT_MAX_SIZE_EXCEPT"
+
+        ARGS+=(--json)
+
+        set +e
+        npx --yes "easypng@${{ inputs.version }}" "${ARGS[@]}" > "$RUNNER_TEMP/easypng-result.json"
+        echo "exit-code=$?" >> "$GITHUB_OUTPUT"
+        set -e
+
+        cat "$RUNNER_TEMP/easypng-result.json"
+
+    - name: Parse results
+      id: result
+      shell: bash
+      run: |
+        echo "result-json<<EASYPNG_JSON_EOF" >> "$GITHUB_OUTPUT"
+        cat "$RUNNER_TEMP/easypng-result.json" >> "$GITHUB_OUTPUT"
+        echo "EASYPNG_JSON_EOF" >> "$GITHUB_OUTPUT"
+
+        node -e '
+          const fs = require("fs");
+          const data = JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP + "/easypng-result.json", "utf8"));
+          const out = fs.createWriteStream(process.env.GITHUB_OUTPUT, { flags: "a" });
+          out.write("succeeded=" + data.succeeded + "\n");
+          out.write("failed=" + data.failed + "\n");
+          out.write("total-original-size=" + data.totalOriginalSize + "\n");
+          out.write("total-compressed-size=" + data.totalCompressedSize + "\n");
+          out.write("total-saved-percent=" + data.totalSavedPercent + "\n");
+          out.write("over-budget-count=" + data.overBudgetCount + "\n");
+        '
+
+    - name: Fail if easypng reported an error
+      shell: bash
+      run: |
+        if [ "${{ steps.run.outputs.exit-code }}" != "0" ]; then
+          echo "::error::easypng exited with code ${{ steps.run.outputs.exit-code }}, a file failed to compress or is over the max-size budget"
+          exit 1
+        fi

@@ -1,0 +1,63 @@
+name: test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  self-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Generate a sample image
+        run: |
+          npm install --no-save sharp
+          node -e '
+            const sharp = require("sharp");
+            sharp({ create: { width: 200, height: 150, channels: 3, background: { r: 40, g: 90, b: 255 } } })
+              .png()
+              .toFile("sample.png");
+          '
+
+      - name: Run easypng-action
+        id: easypng
+        uses: ./
+        with:
+          path: sample.png
+          format: webp
+          quality: "80"
+          out: dist
+
+      - name: Check outputs
+        run: |
+          test -f dist/sample.webp
+          echo "succeeded: ${{ steps.easypng.outputs.succeeded }}"
+          echo "total-saved-percent: ${{ steps.easypng.outputs.total-saved-percent }}"
+          if [ "${{ steps.easypng.outputs.succeeded }}" != "1" ]; then
+            echo "expected succeeded=1"
+            exit 1
+          fi
+
+      - name: Run with a max-size budget that should fail
+        id: budget
+        uses: ./
+        continue-on-error: true
+        with:
+          path: sample.png
+          format: png
+          colors: "0"
+          max-size: "1"
+          out: dist-budget
+
+      - name: Confirm the budget step actually failed
+        run: |
+          if [ "${{ steps.budget.outcome }}" != "failure" ]; then
+            echo "expected the max-size budget step to fail"
+            exit 1
+          fi
